@@ -1,0 +1,4 @@
+# THIS IS THE HALF-ASSED SHELL RC FILE #
+ps1=esp32
+color=True
+greet=/etc/shell/welcome.txt
