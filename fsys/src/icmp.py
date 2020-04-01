@@ -1,5 +1,5 @@
 import uctypes, urandom, uselect, usocket, ustruct, utime
-import src.util
+import src.util as util
 
 
 def icmp_packet(size):
@@ -66,7 +66,11 @@ def scan(ifconfig, sock=None):
     scan_ip_prefix = gateway.split('.')[:3]
     scan_ip = '.'.join(scan_ip_prefix) + '.0'
 
-    for count in range(util.ip_range(address, netmask)):
+
+    ip_range = util.ip_range(address, netmask)
+    print("scanning ip range from: %s + %d addresses" % (scan_ip, ip_range))
+
+    for count in range(ip_range):
         
         if ping(scan_ip, repeat=10, timeout=100, silent=True):
             print(scan_ip)

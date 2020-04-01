@@ -1,0 +1,6 @@
+ampy==1.2.6
+ecdsa==0.15
+esptool==2.8
+pyaes==1.6.1
+pyserial==3.4
+six==1.14.0

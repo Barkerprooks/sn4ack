@@ -1,5 +1,5 @@
 import network
-import ubinascii
+import utime
 
 import src.shell as shell
 import src.util as util
@@ -19,11 +19,12 @@ def randomize_mac(iface):
     except:
         randomize_mac(iface)
 
+utime.sleep(2.4)
 
 wlan = network.WLAN(network.STA_IF)
 wlan.active(True)
 
-randomize_mac(wlan)
+#randomize_mac(wlan)
 
 with open("etc/wlan/wlan.conf", "rt") as fs:
     config = fs.read()
