@@ -2,8 +2,3 @@
 Welcome to the "snhack" ESP32 hacking framework
 -----------------------------------------------
 
-some info will go here in a bit
-read the github page: https://github.com/barkerprooks/snhack.git
-
-type: "help" for a list of commands
-type: "man [command]" for extra help

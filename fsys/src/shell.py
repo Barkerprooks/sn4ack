@@ -1,4 +1,4 @@
-import usocket, uos
+import uhashlib, usocket, uos
 
 import src.icmp as icmp
 import src.portmap as portmap
@@ -96,10 +96,20 @@ def execute(cmd, args=None, sock=None, config=[]):
 class ShellServer:
 
     def __init__(self, ifconfig):
-        self.ifconfig = ifconfig
-        self.usernm = "idiot"
         
-        with open("/etc/shell/welcome.txt", "rb") as fs:
+        self.ifconfig = ifconfig
+        self.authenticated = False
+
+        with open("/home/.shrc", "rt") as fs:
+            options = fs.read().split('\n')
+            options = options[1:-1]
+            for i in range(len(options)):
+                options[i] = options[i].split('=')[1]
+
+        self.username = options[0]
+        self.hascolor = options[1]
+       
+        with open(options[2], "rb") as fs:
             self.greeting = fs.read()
 
 
@@ -111,7 +121,12 @@ class ShellServer:
     def _handle(self, connfd):
 
         while True:
-            connfd.send(b"[%s] > " % self.usernm)
+            
+            if not self.authenticated:
+                connfd.send(b"enter password: ") 
+            else: 
+                connfd.send(b"[%s] > " % self.username)
+            
             msg = connfd.recv(1024)
             msg_parts = [i.decode("utf-8").strip() for i in msg.split(b' ')]
 
@@ -126,8 +141,24 @@ class ShellServer:
                 self._close(connfd)
                 break
 
-            execute(cmd, args, connfd, self.ifconfig)
+            if not self.authenticated:
+                if not self._authenticate(cmd):
+                    connfd.send(b"invalid password")
+            else:
+                execute(cmd, args, connfd, self.ifconfig)
     
+
+    def _authenticate(self, passwd):
+        
+        hashwd = uhashlib.sha256(passwd.encode("utf-8")).digest()
+        with open("/etc/passwd", "rb") as fs:
+            checkwd = fs.read()
+            print("orig: %s vs input: %s" % (checkwd, hashwd))
+            if checkwd == hashwd:
+                self.authenticated = True
+                return True
+            else:
+                return False
 
     def _close(self, connfd):
         connfd.send(b"bye\r\n")
