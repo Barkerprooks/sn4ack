@@ -27,7 +27,7 @@ def lookup_ports() -> list:
         except (serial.serialutil.SerialException, PermissionError):
             print("Permission to USB ports was denied.")
             if platform.system() == "Linux":
-                print('try: "sudo %s"' % sys.argv[0])
+                print('try: "sudo python %s"' % sys.argv[0])
             sys.exit(1)
 
     return device_ports

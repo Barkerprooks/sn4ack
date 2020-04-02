@@ -1,6 +1,6 @@
-<h1>Sn4ack</h1>
-<h2>snhack - a toy hacking shell for the ESP32 development board</h2>
+# Sn4ack
 
-<hr>
+### A toy for pentesters
 
-<p>todo</p>
+Sn4ack (snhack... as in snack) is an embeded hacking shell made for the esp32 microprocessor.
+The shell attempts to roughly emulate a unix environment, and does so through an embeded python interpreter called [Micropython](https://micropython.org).
