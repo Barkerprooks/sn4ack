@@ -12,11 +12,11 @@ The shell roughly emulates a unix environment through a tiny python interpreter 
 2. plug in your ESP32 device
 3. run "python install.py"
 
-'''
+```
 git clone https://github.com/Barkerprooks/sn4ack.git
 cd sn4ack
 python install.py
-'''
+```
 
 ### How to use
 
