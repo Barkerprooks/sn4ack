@@ -93,6 +93,7 @@ def execute(cmd, args=None, sock=None, config=[]):
         print(out) 
         send_output(sock, out)
 
+
 class ShellServer:
 
     def __init__(self, ifconfig):
@@ -113,39 +114,36 @@ class ShellServer:
             self.greeting = fs.read()
 
 
-    def _greet(self, connfd, info):
-        onport = b"\r\n> login from [%s:%d]\r\n\r\n" % (info[0].encode("utf-8"), info[1])
-        connfd.send(self.greeting + onport)
+    def _greet(self):
+        from_ip = "%s:%d" % (self.onport[0].encode("utf-8"), self.onport[1])
+        self.socket.send(b"%s\nlogin from [%s]\r\n" % (self.greeting, from_ip))
 
 
-    def _handle(self, connfd):
+    def _handle(self):
 
-        while True:
+        if not self.authenticated:
+            self.socket.send(b"enter password: ") 
+        else: 
+            self.socket.send(b"[%s] > " % self.username)
             
-            if not self.authenticated:
-                connfd.send(b"enter password: ") 
-            else: 
-                connfd.send(b"[%s] > " % self.username)
-            
-            msg = connfd.recv(1024)
-            msg_parts = [i.decode("utf-8").strip() for i in msg.split(b' ')]
+        msg = self.socket.recv(1024)
+        msg_parts = [i.decode("utf-8").strip() for i in msg.split(b' ')]
 
-            print(msg_parts)
+        print(msg_parts)
 
-            cmd = msg_parts[0]
-            args = None
-            if len(msg_parts) > 0:
-                args = msg_parts[1:]
+        cmd = msg_parts[0]
+        args = None
+        if len(msg_parts) > 0:
+            args = msg_parts[1:]
 
-            if cmd == "quit" or cmd == "exit":
-                self._close(connfd)
-                break
+        if cmd == "quit" or cmd == "exit":
+            self._close()
 
-            if not self.authenticated:
-                if not self._authenticate(cmd):
-                    connfd.send(b"invalid password")
-            else:
-                execute(cmd, args, connfd, self.ifconfig)
+        if not self.authenticated:
+            if not self._authenticate(cmd):
+                self.socket.send(b"invalid password")
+        else:
+            execute(cmd, args, self.socket, self.ifconfig)
     
 
     def _authenticate(self, passwd):
@@ -160,10 +158,11 @@ class ShellServer:
             else:
                 return False
 
-    def _close(self, connfd):
-        connfd.send(b"bye\r\n")
-        connfd.close()
+    def _close(self):
+        self.socket.send(b"bye\r\n")
+        self.socket.close()
         execute("cd", ["/"])
+
 
     def start(self, port=1337):
         
@@ -175,10 +174,10 @@ class ShellServer:
         sockfd.listen(1)
         
         try:
-            connfd, connport = sockfd.accept()
+            self.socket, self.onport = sockfd.accept()
         except:
             import sys
             sys.exit(0)
         
-        self._greet(connfd, connport)
-        self._handle(connfd)
+        self._greet()
+        self._handle()

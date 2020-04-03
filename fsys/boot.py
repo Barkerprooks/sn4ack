@@ -1,8 +1,11 @@
 import network
 import utime
+import select
 
 import src.shell as shell
 import src.util as util
+
+import lib.slimDNS as mdns
 
 def randomize_mac(iface):
     
@@ -34,5 +37,21 @@ with open("etc/wlan/wlan.conf", "rt") as fs:
 while not wlan.isconnected():
     pass
 
-sh = shell.ShellServer(ifconfig=wlan.ifconfig())
+ifconfig = wlan.ifconfig()
+
+sh = shell.ShellServer(ifconfig=ifconfig)
+dns = mdns.SlimDNSServer(ifconfig[0], "snhack")
+
 sh.start(22)
+
+while True:
+    
+    read = [sh.socket, dns.sock]
+    sockets, _, _ = select.select(read, [], [])
+
+    if sh.socket in sockets:
+        sh._handle()
+
+    elif dns.sock in sockets:
+        print("recv")
+        dns.process_waiting_packets()

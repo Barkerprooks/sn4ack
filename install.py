@@ -123,17 +123,29 @@ def install_system(port):
     print("making sure device is clean")
     subprocess.run([FSCTL, "-p", port, "run", "utils/nukefs.py"]) 
     filesystem = walk_fs("fsys")
-    
+
+    swp = None
+    for i in range(len(filesystem["files"])):
+        if filesystem["files"][i] == "boot.py":
+            swp = i
+
+    if swp:
+        temp = filesystem["files"][-1]
+        filesystem["files"][-1] = filesystem["files"][swp]
+        filesystem["files"][swp] = temp
+
+    print(filesystem["files"])
+
     for d in filesystem["bdirs"]:
         success = None
         while success != 0:
-             success = subprocess.run(["ampy", "-p", port, "mkdir", d], timeout=7).returncode
+             success = subprocess.run([FSCTL, "-p", port, "mkdir", d], timeout=7).returncode
         print("created %s" % d)
     
     for d in filesystem["sdirs"]:
         success = None
         while success != 0:
-            success = subprocess.run(["ampy", "-p", port, "mkdir", d], timeout=7).returncode
+            success = subprocess.run([FSCTL, "-p", port, "mkdir", d], timeout=7).returncode
         print("created %s" % d)
    
     for f in filesystem["files"]:
@@ -141,10 +153,14 @@ def install_system(port):
         location = "fsys/" + f
         while success != 0:
             try:
-                success = subprocess.run(["ampy", "-p", port, "put", location, f], timeout=7, capture_output=True).returncode
+                subprocess.run([FSCTL, "-p", port, "reset"])
+                success = subprocess.run([FSCTL, "-p", port, "put", location, f], timeout=15, capture_output=True).returncode
+            except KeyboardInterrupt:
+                sys.exit(0)
             except:
                 print("trying again")
                 success = None
+        
         print("uploaded %s" % f)
 
     os.remove("fsys/etc/passwd")
