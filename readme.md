@@ -16,3 +16,5 @@ python install.py
 
 ### How to use
 1. find the IP address of the device
+2. use telnet or netcat to connect to the ip address on port 22
+3. have fun
