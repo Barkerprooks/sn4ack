@@ -1,4 +1,5 @@
-import uhashlib, usocket, uos
+import uhashlib, usocket, uos, utime
+import ntptime
 
 import src.icmp as icmp
 import src.portmap as portmap
@@ -101,31 +102,38 @@ class ShellServer:
         self.ifconfig = ifconfig
         self.authenticated = False
 
-        with open("/home/.shrc", "rt") as fs:
+        with open("/etc/sh/sh.conf", "rt") as fs:
             options = fs.read().split('\n')
-            options = options[1:-1]
             for i in range(len(options)):
-                options[i] = options[i].split('=')[1]
+                if '=' in options[i]:
+                    options[i] = options[i].split('=')[1]
 
         self.username = options[0]
-        self.hascolor = options[1]
-       
-        with open(options[2], "rb") as fs:
-            self.greeting = fs.read()
+      
+        with open(options[1], "rb") as fs:
+            self.last_login = fs.read()
+        
+        with open(options[1], "wb") as fs:
+            fs.write(self._time().encode("utf-8")) 
+
+
+    def _time(self):
+        t = utime.localtime(ntptime.time())
+        return "%s:%s%s %s/%s/%s" % (t[3], t[4], t[5], t[1], t[3], t[0])
 
 
     def _greet(self):
-        from_ip = "%s:%d" % (self.onport[0].encode("utf-8"), self.onport[1])
-        self.socket.send(b"%s\nlogin from [%s]\r\n" % (self.greeting, from_ip))
+        self.socket.send((b'-' * 12) + b"\r\nSN4ACK v0.01\r\n" + (b'-' * 12) + "\r\n\r\n")
+
+        self.socket.send(b"current gmt time: %s\r\n" % self._time())
+        self.socket.send(b"last login on: %s\r\n\r\n" % self.last_login)
+
+        from_ip = "%s:%d" % (self.onport[0], self.onport[1])
+        self.socket.send(b"login from [%s]\r\n" % (from_ip))
 
 
     def _handle(self):
-
-        if not self.authenticated:
-            self.socket.send(b"enter password: ") 
-        else: 
-            self.socket.send(b"[%s] > " % self.username)
-            
+        
         msg = self.socket.recv(1024)
         msg_parts = [i.decode("utf-8").strip() for i in msg.split(b' ')]
 
@@ -138,12 +146,18 @@ class ShellServer:
 
         if cmd == "quit" or cmd == "exit":
             self._close()
+            return
 
         if not self.authenticated:
             if not self._authenticate(cmd):
-                self.socket.send(b"invalid password")
+                self.socket.send(b"invalid password\r\n")
+                self.socket.send(b"enter password: ") 
+            else:
+                self._greet()
+                self.socket.send(b"[%s] > " % self.username)
         else:
             execute(cmd, args, self.socket, self.ifconfig)
+            self.socket.send(b"[%s] > " % self.username)
     
 
     def _authenticate(self, passwd):
@@ -157,6 +171,7 @@ class ShellServer:
                 return True
             else:
                 return False
+
 
     def _close(self):
         self.socket.send(b"bye\r\n")
@@ -179,5 +194,5 @@ class ShellServer:
             import sys
             sys.exit(0)
         
-        self._greet()
+        self.socket.send(b"enter password: ") 
         self._handle()
