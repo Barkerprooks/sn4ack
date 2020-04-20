@@ -2,7 +2,7 @@ import uhashlib, usocket, uos, utime
 import ntptime
 
 import src.icmp as icmp
-import src.portmap as portmap
+import src.pmap as portmap
 
 from src.fctl import *
 
@@ -89,6 +89,9 @@ def execute(cmd, args=None, sock=None, config=[]):
         else:
             required = 1
 
+    elif cmd == "date" or cmd == "time" or cmd == "datetime":
+        get_time(sock=sock)
+
     if required:
         out = "error: %s requires %d argument(s). %d given\r\n" % (cmd, required, len(args))
         print(out) 
@@ -116,14 +119,19 @@ class ShellServer:
         with open(options[1], "wb") as fs:
             fs.write(self._time().encode("utf-8")) 
 
+        with open("/etc/fs/version", "rb") as fs:
+            self.version = fs.read()
+
 
     def _time(self):
         t = utime.localtime(ntptime.time())
-        return "%s:%s%s %s/%s/%s" % (t[3], t[4], t[5], t[1], t[3], t[0])
+        return "%s:%s:%s %s/%s/%s" % (t[3],t[4],t[5], t[1],t[2],t[0])
 
 
     def _greet(self):
-        self.socket.send((b'-' * 12) + b"\r\nSN4ACK v0.01\r\n" + (b'-' * 12) + "\r\n\r\n")
+        verstr = b"SN4ACK v%s" % self.version
+        border = b'-' * (len(verstr) - 1) + b"\r\n"
+        self.socket.send(border + verstr + border + b"\r\n\r\n")
 
         self.socket.send(b"current gmt time: %s\r\n" % self._time())
         self.socket.send(b"last login on: %s\r\n\r\n" % self.last_login)

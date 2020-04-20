@@ -85,6 +85,10 @@ def install_system(port):
     print("setup networking (leave password blank if none):")
 
     if not os.path.isfile("fsys/etc/wlan/wlan.conf"):
+
+        if not os.path.isdir("fsys/etc/wlan"):
+            os.mkdir("fsys/etc/wlan")
+
         net_ssid = input("network ssid: ")
         password = input("passphrase: ")
         creds = [net_ssid, password]
@@ -174,6 +178,10 @@ if __name__ == "__main__":
     ports = lookup_ports()
     selection = None
 
+    if len(ports) == 0:
+        print("No devices detected")
+        sys.exit(1)
+
     for i in range(0, len(ports)):
         print("[%d] - %s" % (i, ports[i]))
     
@@ -192,3 +200,6 @@ if __name__ == "__main__":
     fs = install_system(port)
 
     print("\nFILESYSTEM UPLOADED:\n%s" % fs)
+    subprocess.run([FSCTL, "-p", port, "run", "utils/getip.py"])
+
+    print("\npress RST button, wait a bit, and connect to shell on port 22")

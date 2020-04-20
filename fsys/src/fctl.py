@@ -1,4 +1,7 @@
-import uos
+import uos, utime
+import ntptime
+
+from src.util import zfill
 
 def f_or_d(fstat):
     if fstat == 32768:
@@ -165,6 +168,23 @@ def del_directory(directory, sock=None):
         uos.rmdir(directory)
     except:
         out = "could not remove %s" % directory
+        print(out)
+        send_output(sock, out)
+
+
+def get_time(sock=None):
+    try:
+        t = utime.localtime(ntptime.time())
+
+        h = zfill(str(t[3]), 2)
+        m = zfill(str(t[4]), 2)
+        s = zfill(str(t[5]), 2)
+
+        time = "%s:%s:%s GMT\r\n%s/%s/%s" % (h, m, s, t[1], t[2], t[0])
+        print(time)
+        send_output(sock, time)
+    except:
+        out = "could not get time"
         print(out)
         send_output(sock, out)
 
