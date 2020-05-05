@@ -1,11 +1,13 @@
 import network
 import utime
 import select
+import esp
 
 import src.shell as shell
 import src.util as util
 
 import lib.slimDNS as mdns
+
 
 def randomize_mac(iface):
     
@@ -22,7 +24,8 @@ def randomize_mac(iface):
     except:
         randomize_mac(iface)
 
-utime.sleep(2.4)
+
+esp.osdebug(None)
 
 wlan = network.WLAN(network.STA_IF)
 wlan.active(True)
@@ -46,12 +49,11 @@ sh.start(22)
 
 while True:
     
-    read = [sh.socket, dns.sock]
-    sockets, _, _ = select.select(read, [], [])
+    sockets, _, _ = select.select([sh.socket, dns.sock], [], [])
 
     if sh.socket in sockets:
         sh._handle()
 
-    elif dns.sock in sockets:
+    if dns.sock in sockets:
         print("recv")
         dns.process_waiting_packets()

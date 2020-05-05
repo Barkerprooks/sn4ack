@@ -3,14 +3,55 @@ import ntptime
 
 import src.icmp as icmp
 import src.pmap as portmap
+import src.inet as inet
 
 from src.fctl import *
+
+CMDLIST = {
+    "list files": ["ls", "dir"],
+    "change directory": ["cd", "chdir"],
+    "delete file": ["rm", "del"],
+    "read files": ["cat", "less", "more"],
+    "copy files": ["cp", "copy"],
+    "move files": ["mv", "move"],
+    "create directory": ["mkdir"],
+    "delete directoty": ["rmdir"],
+    "icmp ping a host": ["ping"],
+    "icmp scan network": ["icmp-scan", "show-hosts"],
+    "send http(s) requests": ["http (GET|POST) <URL>"],
+    "port map a host": ["pmap", "nmap", "portmap"] 
+}
+
+def show_available_commands(sock=None):
+    
+    commands = "commands:\n"
+
+    for key in CMDLIST:
+        commands += '\t'
+        cmds = cmdlist[key]
+        for i in range(len(cmds)):
+            commands += "%s" % cmds[i]
+            if i < len(cmds) - 1:
+                commands += ','
+        commands += " \t-- %s" % key
+
+    return commands + '\n'
 
 def execute(cmd, args=None, sock=None, config=[]):
 
     required = 0
 
-    if cmd == "ls" or cmd == "dir":
+    if cmd == "help" or cmd == "?":
+        if args:
+            out = "not impl yet"
+            print(out)
+            send_output(sock, out)
+        else:
+            commands = show_available_commands()
+            print(commands)
+            send_output(commands)
+
+    elif cmd == "ls" or cmd == "dir":
         if args:
             for arg in args:
                 list_dir(arg, sock=sock)
@@ -74,10 +115,10 @@ def execute(cmd, args=None, sock=None, config=[]):
         else:
             required = 1
 
-    elif cmd == "show yourselves" or cmd == "icmp-scan":
+    elif cmd == "show yourselves" or cmd == "icmp-scan" or cmd == "scan":
         icmp.scan(config, sock=sock)
 
-    elif cmd == "portmap" or cmd == "nmap":
+    elif cmd == "portmap" or cmd == "nmap" or cmd == "pmap":
         if args:
             if args[0] == "all":
                 if args[1]:
@@ -92,10 +133,87 @@ def execute(cmd, args=None, sock=None, config=[]):
     elif cmd == "date" or cmd == "time" or cmd == "datetime":
         get_time(sock=sock)
 
+    elif cmd == "http" or cmd == "curl":
+        if args:
+
+            url = args[len(args) - 1] # url will always be last
+            method = args[0]
+            
+            headers = None
+            data = None
+            
+            save = False
+
+            if len(args) > 2:
+                opts = args[1:len(args) - 2]
+                
+                if "-s" or "--save" in opts:
+                    save = True
+                    
+                for i in range(len(opts)):
+                    
+                    quote = ['"', "'"]
+                    
+                    if opts[i] == "-h" or opts[i] == "--headers":
+
+                        try:
+                            opt = opts[i+1]
+                        except:
+                            out = "missing header"
+                            print(out)
+                            send_output(sock, out)
+                        
+                        start = opt[0]
+                        end = opts[len(opt) - 1]
+                        header_list = []
+
+                        if start in quote and end in quote and start == end:
+                            header_list = opt.split(',')
+                        else:
+                            header_list = opt.split(',')
+                            for j in range(len(header_list)):
+                                header_list[j] = header_list[j].strip()
+                        
+                        headers = dict()
+                        for h in header_list:
+                            keyval = h.split(':')
+                            headers[keyval[0]] = keyval[1]
+                    
+                    elif opts[i] == "-d" or opts[i] == "--data":
+
+                        try:
+                            opt = opts[i+1]
+                        except:
+                            out = "missing data"
+                            print(out)
+                            send_output(sock, out)
+
+                        start = opt[0]
+                        end = opt[len(opt) - 1]
+                        data_list = []
+                        
+                        if start in quote and end in quote and start == end:
+                            data_list = opt.split(',')
+                        else:
+                            data_list = opt.split(',')
+                            for j in range(len(data_list)):
+                                data_list[j] = data_list[j].strip()
+            
+                        data = dict()
+                        for d in data_list:
+                            keyval = d.split('=')
+                            data[keyval[0]] = keyval[1]
+
+            inet.request(method, url, headers=headers, data=data, sock=sock, savetofile=save)
+            
+        else:
+            required = 1
+
     if required:
-        out = "error: %s requires %d argument(s). %d given\r\n" % (cmd, required, len(args))
+        out = "error: %s requires at least %d argument(s). %d given\r\n" % (cmd, required, len(args))
         print(out) 
         send_output(sock, out)
+
 
 
 class ShellServer:
@@ -185,6 +303,8 @@ class ShellServer:
         self.socket.send(b"bye\r\n")
         self.socket.close()
         execute("cd", ["/"])
+        import machine
+        machine.reset()
 
 
     def start(self, port=1337):

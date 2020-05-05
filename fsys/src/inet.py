@@ -3,36 +3,31 @@ import network
 
 from src.fctl import f_or_d
 
-wlan = network.WLAN(network.STA_IF)
-wlan.active(True)
-# oops
-wlan.connect("Baird-2G", "<censored>")
-while not wlan.isconnected():
-    pass
 
+def request(method, url, headers=None, data=None, sock=None, savetofile=False):
 
-def request(method, url, headers=None, data=None, savetofile=False):
-
-    if headers and not isinstance(headers, dict):
-        print("headers must be in a dict")
-        return None
-    
-    if data and not isinstance(data, dict):
-        print("data must be in a dict")
+    if headers and isinstance(headers, dict) or data and isinstance(data, dict):
+        print("dumbass")
         return None
 
     response = dict(code=-1, content='', headers=dict())
     resource, body = '/', ''
     
     if method.upper() != "GET" and method.upper() != "POST":
-        print("method %s not supported" % method.upper())
+        out = "method %s not supported" % method.upper()
+        print(out)
+        if sock:
+            sock.write(out.encode("utf-8"))
         return None
     
     port = 80
     if "https://" == url[:8]:
         port = 443
     elif "http://" != url[:7]:
-        print("stream wrapper format incorrect")
+        out = "stream wrapper format incorrect"
+        print(out)
+        if sock:
+            sock.write(out.encode("utf-8"))
         return None
 
     host = url.split("//")[1]
@@ -51,7 +46,10 @@ def request(method, url, headers=None, data=None, savetofile=False):
             host = elements[0]
             port = int(elements[1])
         except:
-            print("request format incorrect")
+            out = "request format incorrect"
+            print(out)
+            if sock:
+                sock.write(out.encode("utf-8"))
             return None
 
     if data:
@@ -66,19 +64,14 @@ def request(method, url, headers=None, data=None, savetofile=False):
         
         resource = resource[:-1]
 
-    print("REQUEST")
-    print("raddress: %s:%s" % (host, port))
-    print("resource: %s" % resource)
-    if method.upper() == "POST":
-        print("postbody: \n%s" % body)
-
     info = usocket.getaddrinfo(host, port, 0, usocket.SOCK_STREAM)[0]
     sockfd = usocket.socket(info[0], info[1], info[2])
-    
+    sockfd.settimeout(5)
+     
     sockfd.connect((host, port))
     if port == 443:
         sockfd = ussl.wrap_socket(sockfd, server_hostname=host)
-
+    
     sockfd.write(b"%s /%s HTTP/1.1\r\n" % (method.upper(), resource))
     sockfd.write(b"Host: %s\r\n" % host)
 
@@ -90,53 +83,74 @@ def request(method, url, headers=None, data=None, savetofile=False):
 
     status = sockfd.readline()
     
-    print("got here")
-
     try:
         response["code"] = int(status[9:12].decode("utf-8"))
     except ValueError:
-        response["status"] = -1
+        response["code"] = -1
+        return None
 
     at_headers = True
-    
+    recv = 1
+
+
     while 1:
-        recv = sockfd.readline()
-        
-        if not recv:
+         
+        if not recv or recv == b'':
             break
         
+        try:
+            recv = sockfd.readline()
+        except OSError:
+            break
+
         if at_headers:
             if recv == b'\r\n' or b':' not in recv:
                 at_headers = False
                 continue
             header = recv.decode("utf-8").split(": ")
             response["headers"][header[0]] = header[1]
-        else: 
+        else:
+            print(response["content"])
             response["content"] += recv.decode("utf-8")
 
-    print(response["headers"])
-    print(response["content"])
+
+    httpout = "status: %s\n\n%s\n\n%s\n\n" % (response["code"], response["headers"], response["content"])
+    
+    userout = "HOST: %s\nPORT: %s\nRESOURCE: %s\n\n" % (host, port, resource)
+    if method.upper() == "POST":
+        userout += "DATA:\n%s" % body
+    
+    print(userout)
+    print(httpout)
+
+    if sock:
+        sock.write(userout.encode("utf-8"))
+        sock.write(httpout.encode("utf-8"))
 
     if savetofile:
-        
-        fname = "inet-%s.txt" % host
+        lastn = 0
+        fname = "%s-%s" % (method.upper(), host)
 
-        for f in uos.listdir("var/inet"):
-            if f == fname and len(f.split('.')) > 1:
+        try:
+            uos.stat("/home/Documents/inet")
+        except:
+            uos.mkdir("/home/Documents/inet")
 
-        with open("inet-%s.txt" % host)
+        for f in uos.listdir("/home/Documents/inet"):
+            if fname in f:
+                try:
+                    num = int(f.split('_')[1].split('.')[0])
+                    if num > lastn:
+                        lastn = num
+                except ValueError:
+                    print("failed to save file")
+
+        fname += "_%s.txt" % lastn
+        fname = "/home/Documents/inet/" + fname
+
+        with open(fname, "wt+") as fs:
+            fs.write(userout)
+            fs.write(httpout)
 
     return response
 
-
-def get(url, header=None, data=None):
-    request("get", url, header=header, data=data)
-
-
-def post(url, header=None, data=None):
-    request("post", url, header=header, data=data)
-
-
-if __name__ == "__main__":
-
-    request("get", "https://google.com/", savetofile=True)

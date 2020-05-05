@@ -89,8 +89,8 @@ def install_system(port):
         if not os.path.isdir("fsys/etc/wlan"):
             os.mkdir("fsys/etc/wlan")
 
-        net_ssid = input("network ssid: ")
-        password = input("passphrase: ")
+        net_ssid = input("network ssid (name): ")
+        password = input("network passphrase: ")
         creds = [net_ssid, password]
 
         with open("fsys/etc/wlan/wlan.conf", "wt+") as fs:
@@ -138,18 +138,16 @@ def install_system(port):
         filesystem["files"][-1] = filesystem["files"][swp]
         filesystem["files"][swp] = temp
 
-    print(filesystem["files"])
-
     for d in filesystem["bdirs"]:
         success = None
         while success != 0:
-             success = subprocess.run([FSCTL, "-p", port, "mkdir", d], timeout=7).returncode
+             success = subprocess.run([FSCTL, "-p", port, "mkdir", d], timeout=15).returncode
         print("created %s" % d)
     
     for d in filesystem["sdirs"]:
         success = None
         while success != 0:
-            success = subprocess.run([FSCTL, "-p", port, "mkdir", d], timeout=7).returncode
+            success = subprocess.run([FSCTL, "-p", port, "mkdir", d], timeout=15).returncode
         print("created %s" % d)
    
     for f in filesystem["files"]:
