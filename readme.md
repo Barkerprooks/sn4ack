@@ -2,7 +2,7 @@
 
 ## V0.2 - INDEV
 Sn4ack (snhack... as in snack) is an embeded hacking OS/shell made for the ESP32 microprocessor.\
-The shell roughly emulates a unix environment through a tiny python interpreter called [Micropython](https://micropython.org).\
+The shell roughly emulates a unix environment through a tiny python interpreter called [Micropython](https://micropython.org).
 - Note: This is still a bit buggy and I'm doing this in my free time, so some things may not work as intended.
 
 ### How to install
