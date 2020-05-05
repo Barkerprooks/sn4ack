@@ -25,16 +25,15 @@ python install.py
 #### Commands Available
 ```
 Basic:
-- ls / dir ... list files in directory
-- cd / chdir ... change working directory
-- rm / del ... delete a file
-- cat ... read a file
-- more ... read a file in chunks
-- cp / copy ... copy a file to a new location
-- mv / move ... move a file to a new location
-- mkdir	... create a new empty directory
-- date / time		... prints the date and time
-
+- ls / dir 	... list files in directory
+- cd / chdir 	... change working directory
+- rm / del 	... delete a file
+- cat 		... read a file
+- more 		... read a file in chunks
+- cp / copy 	... copy a file to a new location
+- mv / move 	... move a file to a new location
+- mkdir		... create a new empty directory
+- date / time	... prints the date and time
 
 Fun:
 - ping 			... send icmp ping packets to a host
