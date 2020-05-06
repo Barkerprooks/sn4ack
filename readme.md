@@ -5,10 +5,14 @@ Sn4ack (snhack... as in snack) is an embeded hacking OS/shell made for the ESP32
 The shell roughly emulates a unix environment through a tiny python interpreter called [Micropython](https://micropython.org).
 - Note: This is still a bit buggy and I'm doing this in my free time, so some things may not work as intended.
 
+### Requirements
+- Python 3
+
 ### How to install
 1. clone this repository and cd into it
-2. plug in your ESP32 device (DF Robot ones work best)
-3. run ```python install.py```
+2. run ```pip install -r requirements.txt --user```
+3. plug in your ESP32 device (DF-Robot ones work best)
+4. run ```python install.py```
  - note: if running on linux as a non root user, you may have to use sudo.
 ```
 git clone https://github.com/Barkerprooks/sn4ack.git
