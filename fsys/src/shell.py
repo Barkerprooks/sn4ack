@@ -27,8 +27,8 @@ def show_available_commands(sock=None):
     commands = "commands:\n"
 
     for key in CMDLIST:
-        commands += '\t'
-        cmds = cmdlist[key]
+        commands += '\n\t'
+        cmds = CMDLIST[key]
         for i in range(len(cmds)):
             commands += "%s" % cmds[i]
             if i < len(cmds) - 1:
@@ -47,7 +47,7 @@ def execute(cmd, args=None, sock=None, config=[]):
             print(out)
             send_output(sock, out)
         else:
-            commands = show_available_commands()
+            commands = show_available_commands(sock=sock)
             print(commands)
             send_output(commands)
 
@@ -115,7 +115,7 @@ def execute(cmd, args=None, sock=None, config=[]):
         else:
             required = 1
 
-    elif cmd == "show yourselves" or cmd == "icmp-scan" or cmd == "scan":
+    elif cmd == "icmp-scan" or cmd == "host-scan":
         icmp.scan(config, sock=sock)
 
     elif cmd == "portmap" or cmd == "nmap" or cmd == "pmap":

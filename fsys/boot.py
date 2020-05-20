@@ -8,6 +8,7 @@ import src.util as util
 
 import lib.slimDNS as mdns
 
+from machine import Pin
 
 def randomize_mac(iface):
     
@@ -42,6 +43,9 @@ while not wlan.isconnected():
 
 ifconfig = wlan.ifconfig()
 
+led = Pin(2, Pin.OUT)
+led.value(1)
+
 sh = shell.ShellServer(ifconfig=ifconfig)
 dns = mdns.SlimDNSServer(ifconfig[0], "snhack")
 
@@ -49,9 +53,12 @@ sh.start(22)
 
 while True:
     
+    led.value(0)
     sockets, _, _ = select.select([sh.socket, dns.sock], [], [])
 
     if sh.socket in sockets:
+        
+        led.value(1)
         sh._handle()
 
     if dns.sock in sockets:

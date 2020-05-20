@@ -33,7 +33,7 @@ Basic:
 - cd / chdir 	... change working directory
 - rm / del 	... delete a file
 - cat 		... read a file
-- more 		... read a file in chunks
+- more 		... read a file in chunks (buggy and slow for now)
 - cp / copy 	... copy a file to a new location
 - mv / move 	... move a file to a new location
 - mkdir		... create a new empty directory
