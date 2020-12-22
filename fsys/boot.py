@@ -38,10 +38,12 @@ with open("etc/wlan/wlan.conf", "rt") as fs:
     config = config.split('\n')
     wlan.connect(config[0], config[1])
 
+print("trying to connect to the internet...")
 while not wlan.isconnected():
     pass
 
 ifconfig = wlan.ifconfig()
+print("connected. you are %s" % ifconfig[0])
 
 led = Pin(2, Pin.OUT)
 led.value(1)
