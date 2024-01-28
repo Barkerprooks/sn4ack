@@ -1,4 +1,4 @@
-# Sn4ack DEPRECIATED, SEE [VIPER OS](https://github.com/Barkerprooks/viper-os)
+# Sn4ack DEPRECIATED
 ## V0.2 - INDEV
 Sn4ack (snhack... as in snack) is an embeded hacking OS/shell made for the ESP32 microprocessor.\
 The shell roughly emulates a unix environment through a tiny python interpreter called [Micropython](https://micropython.org).
